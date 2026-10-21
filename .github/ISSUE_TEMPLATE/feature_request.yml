@@ -1,0 +1,17 @@
+name: 功能建议
+description: 希望增加什么能力
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 想要什么
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 使用场景
+      description: 你现在的流程是怎样的？少了这个功能会怎样？
+    validations:
+      required: true

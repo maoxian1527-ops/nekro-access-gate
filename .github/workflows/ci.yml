@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: 语法检查与隐私扫描
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 语法检查
+        run: |
+          python3 -m py_compile plugin/plugin.py
+          echo "✅ py_compile OK"
+
+      - name: 防止误提交真实数据与凭据
+        run: |
+          fail=0
+          # 1) 白名单/配置真身不应入库
+          if git ls-files | grep -Ei '(^|/)(whitelist\.json|config\.yaml)$'; then
+            echo "❌ 不要把真实 whitelist.json / config.yaml 提交上来"
+            fail=1
+          fi
+          # 2) 常见令牌特征
+          if grep -rnE '(dyr_[A-Za-z0-9]{16,})|(ghp_[A-Za-z0-9]{20,})|(github_pat_[A-Za-z0-9_]{20,})|(sk-[A-Za-z0-9]{20,})|(-----BEGIN [A-Z ]*PRIVATE KEY-----)' \
+               --include='*.py' --include='*.md' --include='*.yaml' --include='*.yml' . ; then
+            echo "❌ 检测到疑似令牌或私钥"
+            fail=1
+          fi
+          # 3) 疑似真实 QQ 群号（10 位及以上的数字串出现在代码里，通常是群号）
+          if grep -rnE '[1-9][0-9]{9,}' --include='*.py' . ; then
+            echo "⚠️ 代码里出现长数字串，请确认不是真实群号/QQ号"
+            fail=1
+          fi
+          if [ "$fail" -ne 0 ]; then exit 1; fi
+          echo "✅ 未发现隐私或凭据问题"

@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+whitelist.json
+whitelist.json.tmp
+config.yaml
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

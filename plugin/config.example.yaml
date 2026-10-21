@@ -1,0 +1,20 @@
+# 使用授权门禁 · 配置示例
+# 实际配置由 NekroAgent 保存在 plugin_data/<author>.access_gate/config.yaml
+
+# 【必填】管理员 QQ，逗号分隔。只有他们能发 /na-* 指令，且自己永远不受限
+admins: "123456789"
+
+# 未授权会话是否回一句提示（关闭=完全沉默）
+deny_reply: false
+
+# 未授权的提示文案
+deny_text: 本服务为订阅制，如需使用请联系管理员开通喵。
+
+# 「仅插件」模式下闲聊的提示文案
+plugin_only_text: 本会话为「仅插件」权限：可以用插件和指令，闲聊请先开通完整权限喵。
+
+# 同一会话收到提示的最短间隔（分钟）
+reply_cooldown_minutes: 60
+
+# 白名单文件位置；留空 = 插件目录下的 whitelist.json
+whitelist_path: ""
