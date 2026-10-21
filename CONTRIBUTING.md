@@ -12,7 +12,7 @@
 
 1. Fork → 建分支（`feat/xxx`、`fix/xxx`）
 2. 改代码，确认 `python3 -m py_compile plugin/plugin.py` 通过
-3. 本地实测：至少验证 `/na-list`、`/na-on`、`/na-off` 三个指令与拦截逻辑
+3. 本地实测：至少验证 `/wl-list`、`/wl-on`、`/wl-off` 三个指令与拦截逻辑
 4. 开 PR，说明：改了什么、怎么测的、有没有副作用
 
 ## 代码约定

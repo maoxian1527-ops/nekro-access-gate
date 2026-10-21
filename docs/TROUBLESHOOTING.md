@@ -36,9 +36,9 @@ PLUGIN_ENABLED:
 
 ---
 
-## 2. `/na-on` 没反应，AI 却回了一句"没看懂"
+## 2. `/wl-on` 没反应，AI 却回了一句"没看懂"
 
-**现象**：发 `/na-list`，机器人用 AI 口吻回答，而不是插件返回清单。
+**现象**：发 `/wl-list`，机器人用 AI 口吻回答，而不是插件返回清单。
 
 **原因**：NekroAgent 会把 `/` 开头的消息**优先交给它自己的命令系统**：
 
@@ -53,7 +53,7 @@ if not db_chat_channel.is_active:
 所以纯钩子（`mount_on_user_message`）**收不到** `/` 开头的消息。
 
 **修法（本插件已内置）**：用 `mount_command` 把 `/na-*` 注册成**原生指令**。
-如果你自己写插件，也要注意这一点；或者让用户发**不带斜杠**的形式（`na-list`）。
+如果你自己写插件，也要注意这一点；或者让用户发**不带斜杠**的形式（`wl-list`）。
 
 **排查**：日志里搜 `Command Detect`，如果出现但没有执行结果，说明命令名没注册上。
 
@@ -77,7 +77,7 @@ if not db_chat_channel.is_active:
 
 ## 4. 目标 ID 认错（群/个人搞混）
 
-**现象**：`/na-on 949384578` 把群号当成 QQ 号开通了。
+**现象**：`/wl-on 949384578` 把群号当成 QQ 号开通了。
 
 **原因**：群号和 QQ 号都是纯数字，无法自动区分。
 
@@ -92,7 +92,7 @@ if not db_chat_channel.is_active:
 如果你需要到期，可以：
 
 - 在白名单条目里自己加字段，然后在 `mount_on_user_message` 里做时间判断；
-- 或者用外部定时任务（cron）定期改写 `whitelist.json` / 调用 `/na-off`。
+- 或者用外部定时任务（cron）定期改写 `whitelist.json` / 调用 `/wl-off`。
 
 ---
 
@@ -100,3 +100,29 @@ if not db_chat_channel.is_active:
 
 - 插件管理里停用「使用授权门禁」；
 - 如果还改过 `SESSION_*_ACTIVE_DEFAULT: false`，注意核心层仍然默认禁用新会话。
+---
+
+## 7. 插件指令没反应，但官方指令却能执行（命名冲突）
+
+**现象**：发 `/wl-on` 有效，发 `/na-on` 却表现为"开启/关闭会话"，而不是授权。
+
+**原因**：NekroAgent 自带一组 `na_*` 命令：
+
+```
+built_in/switch.py : na_on / na_off / na_observe     ← 会话启停
+built_in/info.py   : na_help / na_info
+```
+
+插件的命令如果**同名**，会被内置命令抢先（或互相覆盖），表现就是"指令执行了，但不是你要的那个"。
+
+**修法**：给插件命令取一个不冲突的前缀。本插件用 `wl-`（whitelist）：
+`wl-on`、`wl-off`、`wl-list`、`wl-check`、`wl-plugin-only`、`wl-mode`、`wl-help`。
+
+**经验**：注册命令前先看看 `nekro_agent/services/command/built_in/` 里有哪些名字。
+
+---
+
+## 8. `/help` 没有帮助
+
+NekroAgent 没有 `/help`，官方的是 **`/na_help`**。发 `/help` 会当成普通聊天交给 AI。
+本插件提供了 **`/wl-help`** 输出自己的指令表。

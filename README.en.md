@@ -17,7 +17,7 @@ There is no built-in whitelist / subscription feature — this plugin adds one:
 - **Deny by default**: anything not in the whitelist gets `BLOCK_TRIGGER` (the model is never called)
 - **Two tiers**: `full` (chat + plugins) and `plugin-only` (may send media links and use commands,
   but plain chatting is blocked)
-- **Admin commands**: `/na-on`, `/na-off`, `/na-list`, `/na-check`, `/na-plugin-only`, `/na-mode`
+- **Admin commands**: `/wl-on`, `/wl-off`, `/wl-list`, `/wl-check`, `/wl-plugin-only`, `/wl-mode`
 - **No core patches**: survives image upgrades, and can be combined with the WebUI "disable channel" toggle
 
 ## Install
@@ -54,13 +54,13 @@ Groups are prefixed with `群`, individuals are bare QQ numbers. A leading `/` i
 
 | Command | Meaning |
 |---|---|
-| `/na-on 群123456789` | Authorize a group (and activate the channel) |
-| `/na-on 123456789` | Authorize a private user |
-| `/na-off <target>` | Revoke (and disable the channel) |
-| `/na-plugin-only <target>` | Plugin-only tier: plugins/commands allowed, chatting blocked |
-| `/na-mode <target> full` | Back to full access |
-| `/na-check <target>` | Show status of one target |
-| `/na-list` | List the whole whitelist |
+| `/wl-on 群123456789` | Authorize a group (and activate the channel) |
+| `/wl-on 123456789` | Authorize a private user |
+| `/wl-off <target>` | Revoke (and disable the channel) |
+| `/wl-plugin-only <target>` | Plugin-only tier: plugins/commands allowed, chatting blocked |
+| `/wl-mode <target> full` | Back to full access |
+| `/wl-check <target>` | Show status of one target |
+| `/wl-list` | List the whole whitelist |
 
 ## Tiers
 

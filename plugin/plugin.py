@@ -9,14 +9,14 @@ NekroAgent 默认「会话启用」，任何人拉一个群、加一次好友，
   AI 完全不会被调用 —— 真正的零 token。
 * **两种档位**：`完整`（可聊天、可用插件）与 `仅插件`（只能发视频链接 / 用指令，
   不能闲聊）。
-* **管理员指令**：`/na-on`、`/na-off`、`/na-list`、`/na-check`、`/na-plugin-only`、
-  `/na-mode`，在插件内处理，不进 AI。
+* **管理员指令**：`/wl-on`、`/wl-off`、`/wl-list`、`/wl-check`、`/wl-plugin-only`、
+  `/wl-mode`，在插件内处理，不进 AI。
 * **零侵入**：不改 NekroAgent 代码，镜像升级不丢；和会话面板的「禁用」可以叠加使用。
 
 写作约定（建议）
 ----------------
-* 群：``/na-on 群123456789``（群号前写「群」）
-* 个人：``/na-on 123456789``（直接写 QQ 号）
+* 群：``/wl-on 群123456789``（群号前写「群」）
+* 个人：``/wl-on 123456789``（直接写 QQ 号）
 
 数据存放
 --------
@@ -192,20 +192,20 @@ def _is_admin(sender: str, kind: str, target: str, admins: set) -> bool:
 _MODE_FULL = "full"
 _MODE_PLUGIN = "plugin"
 
-_COMMAND_NAMES = ("na-on", "na-off", "na-list", "na-check", "na-plugin-only", "na-mode")
+_COMMAND_NAMES = ("wl-on", "wl-off", "wl-list", "wl-check", "wl-plugin-only", "wl-mode", "wl-help")
 
 _USAGE = """用法（群号前写「群」，个人直接写 QQ 号）：
-【群】/na-on 群123456789          ← 开通这个群
-      /na-off 群123456789         ← 停掉这个群
-      /na-plugin-only 群123456789 ← 只能用插件/指令，不能闲聊
-      /na-mode 群123456789 full   ← 改回完整权限
-      /na-check 群123456789       ← 查询
-【个人】/na-on 123456789          ← 开通这个人
-      /na-off 123456789
-      /na-plugin-only 123456789
-      /na-mode 123456789 full
-      /na-check 123456789
-【通用】/na-list                  ← 列出全部"""
+【群】/wl-on 群123456789          ← 开通这个群
+      /wl-off 群123456789         ← 停掉这个群
+      /wl-plugin-only 群123456789 ← 只能用插件/指令，不能闲聊
+      /wl-mode 群123456789 full   ← 改回完整权限
+      /wl-check 群123456789       ← 查询
+【个人】/wl-on 123456789          ← 开通这个人
+      /wl-off 123456789
+      /wl-plugin-only 123456789
+      /wl-mode 123456789 full
+      /wl-check 123456789
+【通用】/wl-list                  ← 列出全部"""
 
 
 def _command_name(text: str) -> str:
@@ -269,11 +269,13 @@ async def _handle_command(data: Dict[str, Any], cfg: AccessGateConfig, text: str
     parts = text.strip().split()
     action = parts[0].lower()
     rest = parts[1:]
+    if action in ("/wl-help", "/帮助"):
+        return _USAGE
 
     def bucket(kind: str) -> Dict[str, Any]:
         return data["groups"] if kind == "group" else data["users"]
 
-    if action == "/na-list":
+    if action == "/wl-list":
         lines = ["📋 白名单"]
         for kind, label in (("group", "群"), ("private", "人")):
             items = bucket(kind)
@@ -295,7 +297,7 @@ async def _handle_command(data: Dict[str, Any], cfg: AccessGateConfig, text: str
     label = "群" if kind == "group" else "人"
 
     # ---- 开通 ----
-    if action == "/na-on":
+    if action == "/wl-on":
         remark = " ".join(rest).strip() or bucket(kind).get(target_id, {}).get("remark", "")
         existing_mode = bucket(kind).get(target_id, {}).get("mode", _MODE_FULL)
         bucket(kind)[target_id] = {"remark": remark, "mode": existing_mode}
@@ -303,17 +305,17 @@ async def _handle_command(data: Dict[str, Any], cfg: AccessGateConfig, text: str
         return f"✅ 已授权 {_format_entry(kind, target_id, bucket(kind)[target_id])}{note}"
 
     # ---- 取消 ----
-    if action == "/na-off":
+    if action == "/wl-off":
         if bucket(kind).pop(target_id, None) is None:
             return f"❌ {label} {target_id} 本来就不在白名单"
         note = await _set_channel_active(kind, target_id, False)
         return f"🗑 已取消授权：{label} {target_id}{note}"
 
     # ---- 仅插件 ----
-    if action == "/na-plugin-only":
+    if action == "/wl-plugin-only":
         entry = bucket(kind).get(target_id)
         if not entry:
-            return f"❌ {label} {target_id} 不在白名单，请先用 /na-on 开通"
+            return f"❌ {label} {target_id} 不在白名单，请先用 /wl-on 开通"
         entry["mode"] = _MODE_PLUGIN
         return (
             f"✅ 已设为「仅插件」：{_format_entry(kind, target_id, entry)}\n"
@@ -321,10 +323,10 @@ async def _handle_command(data: Dict[str, Any], cfg: AccessGateConfig, text: str
         )
 
     # ---- 档位切换 ----
-    if action == "/na-mode":
+    if action == "/wl-mode":
         entry = bucket(kind).get(target_id)
         if not entry:
-            return f"❌ {label} {target_id} 不在白名单，请先用 /na-on 开通"
+            return f"❌ {label} {target_id} 不在白名单，请先用 /wl-on 开通"
         arg = (rest[0].lower() if rest else "")
         if arg in ("plugin", "仅插件", "插件"):
             entry["mode"] = _MODE_PLUGIN
@@ -333,13 +335,13 @@ async def _handle_command(data: Dict[str, Any], cfg: AccessGateConfig, text: str
         else:
             return (
                 f"当前：{_format_entry(kind, target_id, entry)}\n"
-                "用法：/na-mode <ID> plugin  ← 仅插件\n"
-                "      /na-mode <ID> full    ← 完整权限"
+                "用法：/wl-mode <ID> plugin  ← 仅插件\n"
+                "      /wl-mode <ID> full    ← 完整权限"
             )
         return f"✅ 已切换：{_format_entry(kind, target_id, entry)}"
 
     # ---- 查询 ----
-    if action == "/na-check":
+    if action == "/wl-check":
         entry = bucket(kind).get(target_id)
         if not entry:
             return f"❌ {label} {target_id} 不在白名单"
@@ -425,7 +427,7 @@ async def access_gate(ctx: AgentCtx, _message: Any = None) -> Optional[MsgSignal
 
 # ---------------------------------------------------------------- 原生指令（/na-*）
 # 说明：NekroAgent 会把 "/xxx" 开头的消息优先当它自己的指令处理，插件钩子收不到；
-# 所以用 mount_command 注册成真正的指令，才能响应 /na-on、/na-list 等。
+# 所以用 mount_command 注册成真正的指令，才能响应 /wl-on、/wl-list 等。
 
 
 def _cmd_is_admin(context: "CommandExecutionContext") -> bool:
@@ -452,52 +454,52 @@ async def _run_cmd(context: "CommandExecutionContext", text: str) -> "CommandRes
 
 
 @plugin.mount_command(
-    name="na-on",
+    name="wl-on",
     description="开通白名单并激活会话",
     permission=CommandPermission.PUBLIC,
-    usage="/na-on <群号或QQ号>（群请写 群123456）",
+    usage="/wl-on <群号或QQ号>（群请写 群123456）",
     category="授权管理",
 )
 async def na_on_command(
     context: "CommandExecutionContext",
     target: Annotated[str, Arg("群号（群123456）或 QQ 号", positional=True)],
 ) -> "CommandResponse":
-    return await _run_cmd(context, f"/na-on {target}")
+    return await _run_cmd(context, f"/wl-on {target}")
 
 
 @plugin.mount_command(
-    name="na-off",
+    name="wl-off",
     description="取消白名单授权并禁用会话",
     permission=CommandPermission.PUBLIC,
-    usage="/na-off <群号或QQ号>",
+    usage="/wl-off <群号或QQ号>",
     category="授权管理",
 )
 async def na_off_command(
     context: "CommandExecutionContext",
     target: Annotated[str, Arg("群号（群123456）或 QQ 号", positional=True)],
 ) -> "CommandResponse":
-    return await _run_cmd(context, f"/na-off {target}")
+    return await _run_cmd(context, f"/wl-off {target}")
 
 
 @plugin.mount_command(
-    name="na-plugin-only",
+    name="wl-plugin-only",
     description="设为仅插件模式：可用插件与指令，但不能闲聊",
     permission=CommandPermission.PUBLIC,
-    usage="/na-plugin-only <群号或QQ号>",
+    usage="/wl-plugin-only <群号或QQ号>",
     category="授权管理",
 )
 async def na_plugin_only_command(
     context: "CommandExecutionContext",
     target: Annotated[str, Arg("群号（群123456）或 QQ 号", positional=True)],
 ) -> "CommandResponse":
-    return await _run_cmd(context, f"/na-plugin-only {target}")
+    return await _run_cmd(context, f"/wl-plugin-only {target}")
 
 
 @plugin.mount_command(
-    name="na-mode",
+    name="wl-mode",
     description="切换会话档位：plugin=仅插件 / full=完整权限",
     permission=CommandPermission.PUBLIC,
-    usage="/na-mode <群号或QQ号> <plugin|full>",
+    usage="/wl-mode <群号或QQ号> <plugin|full>",
     category="授权管理",
 )
 async def na_mode_command(
@@ -505,32 +507,32 @@ async def na_mode_command(
     target: Annotated[str, Arg("群号（群123456）或 QQ 号", positional=True)],
     mode: Annotated[str, Arg("plugin 或 full", positional=True)] = "plugin",
 ) -> "CommandResponse":
-    return await _run_cmd(context, f"/na-mode {target} {mode}")
+    return await _run_cmd(context, f"/wl-mode {target} {mode}")
 
 
 @plugin.mount_command(
-    name="na-check",
+    name="wl-check",
     description="查询某个群/人的授权状态",
     permission=CommandPermission.PUBLIC,
-    usage="/na-check <群号或QQ号>",
+    usage="/wl-check <群号或QQ号>",
     category="授权管理",
 )
 async def na_check_command(
     context: "CommandExecutionContext",
     target: Annotated[str, Arg("群号（群123456）或 QQ 号", positional=True)],
 ) -> "CommandResponse":
-    return await _run_cmd(context, f"/na-check {target}")
+    return await _run_cmd(context, f"/wl-check {target}")
 
 
 @plugin.mount_command(
-    name="na-list",
+    name="wl-list",
     description="列出全部白名单",
     permission=CommandPermission.PUBLIC,
-    usage="/na-list",
+    usage="/wl-list",
     category="授权管理",
 )
 async def na_list_command(context: "CommandExecutionContext") -> "CommandResponse":
-    return await _run_cmd(context, "/na-list")
+    return await _run_cmd(context, "/wl-list")
 
 
 # ---------------------------------------------------------------- 自检接口
@@ -554,3 +556,13 @@ def create_router() -> APIRouter:
         }
 
     return router
+
+@plugin.mount_command(
+    name="wl-help",
+    description="显示白名单门禁的全部指令用法",
+    permission=CommandPermission.PUBLIC,
+    usage="/wl-help",
+    category="授权管理",
+)
+async def wl_help_command(context: "CommandExecutionContext") -> "CommandResponse":
+    return await _run_cmd(context, "/wl-help")
