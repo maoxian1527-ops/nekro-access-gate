@@ -265,7 +265,7 @@ async def _set_channel_active(kind: str, target_id: str, active: bool) -> str:
         return f"\n⚠️ 会话启停同步失败：{error}"
 
 
-def _handle_command(data: Dict[str, Any], cfg: AccessGateConfig, text: str) -> str:
+async def _handle_command(data: Dict[str, Any], cfg: AccessGateConfig, text: str) -> str:
     parts = text.strip().split()
     action = parts[0].lower()
     rest = parts[1:]
