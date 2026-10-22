@@ -205,7 +205,11 @@ _USAGE = """用法（群号前写「群」，个人直接写 QQ 号）：
       /wl-plugin-only 123456789
       /wl-mode 123456789 full
       /wl-check 123456789
-【通用】/wl-list                  ← 列出全部"""
+【通用】/wl-list                  ← 列出全部
+        /wl-help                  ← 显示这份帮助
+        /na_help                  ← 查看 NekroAgent 全部内置指令
+
+（其它插件注册的指令同样可用，例如表情导出类插件；它们不经过 AI，也不受本门禁档位限制。）"""
 
 
 def _command_name(text: str) -> str:
